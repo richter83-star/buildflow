@@ -1,62 +1,45 @@
-import type { NewProduct, NewTodo } from './schema';
+import type { NewLicenseKey, NewProduct, NewTodo } from './schema';
 import { db } from './index.server';
 import * as schema from './schema';
+import { generateLicenseKey, hashLicenseKey, normalizeLicenseKey } from '../utils/license.server';
 
-// Seed data with proper UUIDs (including the one expected by route)
+const AUTOMATOR_PRODUCT_ID = '8f06b6f3-8d86-4b0c-9e5a-7abf3a3e9f01';
+
+// Seed data with proper UUIDs
 export const seedProducts: NewProduct[] = [
   {
-    id: "550e8400-e29b-41d4-a716-446655440000", // UUID expected by route
-    name: "Modern Living Room Sofa",
-    price: "1299.99",
-    thumbnailUrl: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop",
-    dimensions: {
-      width: 84,
-      height: 32,
-      depth: 36
-    },
-    model3DUrl: "https://example.com/models/sofa_001.glb"
+    id: AUTOMATOR_PRODUCT_ID,
+    slug: 'automator',
+    name: 'Automator Portal',
   },
-  {
-    id: "550e8400-e29b-41d4-a716-446655440001", // Second UUID from our tests
-    name: "Modern Leather Sofa",
-    price: "1299.99",
-    thumbnailUrl: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop",
-    dimensions: {
-      width: 84,
-      height: 32,
-      depth: 36
-    },
-    model3DUrl: "https://example.com/models/modern-leather-sofa.glb"
-  },
-  {
-    id: "550e8400-e29b-41d4-a716-446655440002", // Third UUID
-    name: "Ergonomic Office Chair",
-    price: "499.99",
-    thumbnailUrl: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop",
-    dimensions: {
-      width: 24,
-      height: 36,
-      depth: 24
-    },
-    model3DUrl: "https://example.com/models/office-chair.glb"
-  }
 ];
+
+const generatedLicenseKeys = Array.from({ length: 3 }, () => generateLicenseKey());
+
+export const seedLicenseKeys: NewLicenseKey[] = generatedLicenseKeys.map((rawKey) => {
+  const normalizedKey = normalizeLicenseKey(rawKey);
+
+  return {
+    productId: AUTOMATOR_PRODUCT_ID,
+    keyHash: hashLicenseKey(normalizedKey),
+  };
+});
 
 // Sample todos for testing
 export const seedTodos: NewTodo[] = [
   {
-    title: "Set up AR product viewer",
-    description: "Configure 3D model rendering for products",
+    title: 'Set up Automator Portal',
+    description: 'Confirm entitlement access for Automator customers',
     completed: false,
   },
   {
-    title: "Test product database",
-    description: "Ensure all products are properly seeded",
-    completed: true,
+    title: 'Verify license redemption flow',
+    description: 'Redeem a license key and reach /portal',
+    completed: false,
   },
   {
-    title: "Deploy to Kubernetes",
-    description: "Set up K8s deployment for production",
+    title: 'Draft onboarding content',
+    description: 'Write initial Start Here, Setup, and Troubleshooting docs',
     completed: false,
   }
 ];
@@ -64,6 +47,7 @@ export const seedTodos: NewTodo[] = [
 // Generic seed data structure - add new tables here
 export const seedData = {
   products: seedProducts,
+  licenseKeys: seedLicenseKeys,
   todos: seedTodos,
 };
 
@@ -71,7 +55,14 @@ export const seedData = {
 export async function seedDatabase() {
   try {
     console.log('Seeding database...');
-    
+
+    if (generatedLicenseKeys.length > 0) {
+      console.log('Generated license keys (store these for redemption tests):');
+      generatedLicenseKeys.forEach((key) => {
+        console.log(`- ${key}`);
+      });
+    }
+
     // Generic seeding - automatically handles any tables defined in seedData
     const seedPromises = Object.entries(seedData).map(async ([tableName, data]) => {
       const table = schema[tableName as keyof typeof schema];
@@ -81,10 +72,10 @@ export async function seedDatabase() {
         console.log(`✓ ${tableName} seeded successfully`);
       }
     });
-    
+
     // Wait for all seeding operations to complete
     await Promise.all(seedPromises);
-    
+
     console.log('Database seeded successfully!');
   } catch (error) {
     console.error('Error seeding database:', error);
@@ -101,4 +92,4 @@ if (require.main === module) {
     console.error('Seeding failed:', error);
     process.exit(1);
   });
-} 
+}
