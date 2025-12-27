@@ -1,28 +1,23 @@
-import { data, Form, redirect, useNavigation } from 'react-router';
-import type { Route } from './+types/redeem';
-import { callTrpc } from '~/utils/trpc.server';
-import { Button } from '~/components/ui/button';
-import { Input } from '~/components/ui/input';
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from '~/components/ui/field';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '~/components/ui/card';
+import { data, Form, redirect, useNavigation } from "react-router";
+import type { Route } from "./+types/redeem";
+import { callTrpc } from "~/utils/trpc.server";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "~/components/ui/field";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const caller = await callTrpc(request);
   const session = await caller.auth.me();
 
   if (!session.isSignedIn) {
-    return redirect('/login');
+    return redirect("/login");
+  }
+
+  // ✅ If already entitled, don't show redeem page
+  const hasEntitlement = await caller.portal.hasEntitlement({ productSlug: "automator" });
+  if (hasEntitlement) {
+    return redirect("/portal");
   }
 
   return {};
@@ -30,26 +25,31 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
-  const key = formData.get('key');
+  const key = formData.get("key");
 
-  if (typeof key !== 'string' || key.trim().length === 0) {
-    return data({ error: 'License key is required' }, { status: 400 });
+  if (typeof key !== "string" || key.trim().length === 0) {
+    return data({ error: "License key is required" }, { status: 400 });
   }
+
+  const normalizedKey = key.trim().toUpperCase();
 
   try {
     const caller = await callTrpc(request);
-    await caller.redeem.license({ key });
+    await caller.redeem.license({ key: normalizedKey });
 
-    return redirect('/portal');
+    // ✅ Give the portal a “just unlocked” signal
+    return redirect("/portal?unlocked=1");
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to redeem license key';
+    const raw = error instanceof Error ? error.message : "Failed to redeem license key";
+    // Common cleanup if TRPC prefixes the message
+    const message = raw.replace(/^TRPCError:\s*/i, "").trim();
     return data({ error: message }, { status: 400 });
   }
 }
 
 export default function RedeemPage({ actionData }: Route.ComponentProps) {
   const navigation = useNavigation();
-  const isSubmitting = navigation.state === 'submitting';
+  const isSubmitting = navigation.state === "submitting";
 
   return (
     <div className="flex min-h-svh items-center justify-center bg-muted/30 p-6">
@@ -60,6 +60,7 @@ export default function RedeemPage({ actionData }: Route.ComponentProps) {
             Enter your Automator Portal license key to unlock access.
           </CardDescription>
         </CardHeader>
+
         <CardContent>
           <Form method="post" className="space-y-6">
             <FieldGroup>
@@ -68,6 +69,7 @@ export default function RedeemPage({ actionData }: Route.ComponentProps) {
                   {actionData.error}
                 </div>
               )}
+
               <Field>
                 <FieldLabel htmlFor="key">License key</FieldLabel>
                 <Input
@@ -81,9 +83,14 @@ export default function RedeemPage({ actionData }: Route.ComponentProps) {
                   Use the key you received after purchasing Automator Portal.
                 </FieldDescription>
               </Field>
-              <Field>
+
+              <Field className="flex gap-3">
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? 'Redeeming...' : 'Redeem license'}
+                  {isSubmitting ? "Redeeming..." : "Redeem license"}
+                </Button>
+
+                <Button type="button" variant="secondary" asChild>
+                  <a href="/portal">Go to portal</a>
                 </Button>
               </Field>
             </FieldGroup>
