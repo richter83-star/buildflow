@@ -29,6 +29,12 @@ type Pages = {
   "/portal": {
     params: {};
   };
+  "/portal/downloads": {
+    params: {};
+  };
+  "/portal/changelog": {
+    params: {};
+  };
   "/auth/github": {
     params: {};
   };
@@ -51,7 +57,7 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/login" | "/signup" | "/dashboard" | "/redeem" | "/portal" | "/auth/github" | "/auth/github/callback" | "/auth/google" | "/auth/google/callback" | "/api/trpc/*";
+    page: "/" | "/login" | "/signup" | "/dashboard" | "/redeem" | "/portal" | "/portal/downloads" | "/portal/changelog" | "/auth/github" | "/auth/github/callback" | "/auth/google" | "/auth/google/callback" | "/api/trpc/*";
   };
   "routes/home.tsx": {
     id: "routes/home";
@@ -76,6 +82,14 @@ type RouteFiles = {
   "routes/portal.tsx": {
     id: "routes/portal";
     page: "/portal";
+  };
+  "routes/portal.downloads.tsx": {
+    id: "routes/portal.downloads";
+    page: "/portal/downloads";
+  };
+  "routes/portal.changelog.tsx": {
+    id: "routes/portal.changelog";
+    page: "/portal/changelog";
   };
   "routes/auth/github.tsx": {
     id: "routes/auth/github";
@@ -107,6 +121,8 @@ type RouteModules = {
   "routes/dashboard": typeof import("./app/routes/dashboard.tsx");
   "routes/redeem": typeof import("./app/routes/redeem.tsx");
   "routes/portal": typeof import("./app/routes/portal.tsx");
+  "routes/portal.downloads": typeof import("./app/routes/portal.downloads.tsx");
+  "routes/portal.changelog": typeof import("./app/routes/portal.changelog.tsx");
   "routes/auth/github": typeof import("./app/routes/auth/github.tsx");
   "routes/auth/github.callback": typeof import("./app/routes/auth/github.callback.tsx");
   "routes/auth/google": typeof import("./app/routes/auth/google.tsx");

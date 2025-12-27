@@ -1,8 +1,9 @@
-import { redirect, useSearchParams } from "react-router";
+import { Link, redirect, useSearchParams } from "react-router";
 import type { Route } from "./+types/portal";
 import { callTrpc } from "~/utils/trpc.server";
 import { Card, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
+import { PortalShell } from "~/components/portal/PortalShell";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const caller = await callTrpc(request);
@@ -26,8 +27,8 @@ export default function PortalPage() {
   const unlocked = params.get("unlocked") === "1";
 
   return (
-    <div className="min-h-svh bg-muted/20 px-6 py-10">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
+    <PortalShell>
+      <div className="flex w-full flex-col gap-8">
         <div>
           <h1 className="text-3xl font-semibold">Automator Portal</h1>
           <p className="mt-2 text-muted-foreground">
@@ -71,9 +72,31 @@ export default function PortalPage() {
               </CardDescription>
             </CardHeader>
           </Card>
+
+          <Link to="/portal/downloads" className="block">
+            <Card className="h-full transition hover:border-primary/60 hover:shadow-md">
+              <CardHeader>
+                <CardTitle className="text-lg">Downloads</CardTitle>
+                <CardDescription>
+                  Grab the starter bundle, checklists, and future release drops.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+
+          <Link to="/portal/changelog" className="block">
+            <Card className="h-full transition hover:border-primary/60 hover:shadow-md">
+              <CardHeader>
+                <CardTitle className="text-lg">Changelog</CardTitle>
+                <CardDescription>
+                  Track new updates, release notes, and upcoming portal work.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <Button asChild>
             <a href="/redeem">Redeem another key</a>
           </Button>
@@ -82,6 +105,6 @@ export default function PortalPage() {
           </Button>
         </div>
       </div>
-    </div>
+    </PortalShell>
   );
 }
