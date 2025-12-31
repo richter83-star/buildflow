@@ -5,6 +5,7 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "~/components/ui/field";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { PAID_OFFER, formatUsd } from "~/utils/offer";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const caller = await callTrpc(request);
@@ -93,6 +94,13 @@ export default function RedeemPage({ actionData }: Route.ComponentProps) {
                   <a href="/portal">Go to portal</a>
                 </Button>
               </Field>
+
+              <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+                Need a license? Get instant access for {formatUsd(PAID_OFFER.priceCents)}.
+                <a href="/checkout" className="ml-1 font-medium text-foreground underline underline-offset-4">
+                  Buy now
+                </a>
+              </div>
             </FieldGroup>
           </Form>
         </CardContent>

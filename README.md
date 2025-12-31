@@ -13,21 +13,29 @@ Using **bun**:
 
 ```bash
 bun install
+```
 
-2) Set up environment
+### 2) Set up environment
+```bash
 cp .env.example .env
-
+```
 
 Edit .env and set at least DATABASE_URL.
 
-3) Push database schema
+### 3) Push database schema
+```bash
 bun run db:push
+```
 
-4) Seed database (optional)
+### 4) Seed database (optional)
+```bash
 bun run db:seed
+```
 
-5) Start dev server
+### 5) Start dev server
+```bash
 bun run dev
+```
 
 
 App runs at: http://localhost:3000
@@ -36,7 +44,7 @@ Tech Stack
 
 Framework: React Router v7 (formerly Remix)
 
-Frontend: React 18 + TypeScript + Tailwind CSS
+Frontend: React 19 + TypeScript + Tailwind CSS
 
 Backend: tRPC (type-safe APIs)
 
@@ -80,6 +88,10 @@ GITHUB_REDIRECT_URI=
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 GOOGLE_REDIRECT_URI=
+
+# Optional: Stripe checkout + webhook
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
 
 # Optional: Domain whitelist (useful for iframe embedding lock)
 DOMAIN_WHITELIST_ENABLED=false

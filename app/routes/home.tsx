@@ -3,6 +3,7 @@ import type { Route } from "./+types/home";
 import { callTrpc } from "~/utils/trpc.server";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { PAID_OFFER, formatUsd } from "~/utils/offer";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const caller = await callTrpc(request);
@@ -49,6 +50,9 @@ export default function HomePage() {
               <a href="/login">Log in</a>
             </Button>
             <Button variant="outline" asChild>
+              <a href="/checkout">Buy access</a>
+            </Button>
+            <Button variant="outline" asChild>
               <a href="/redeem">Redeem license key</a>
             </Button>
           </div>
@@ -93,12 +97,33 @@ export default function HomePage() {
           </Card>
         </div>
 
+        {/* Pricing */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Launch offer</CardTitle>
+            <CardDescription>{PAID_OFFER.tagline}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-3xl font-semibold">
+              {formatUsd(PAID_OFFER.priceCents)} <span className="text-base font-normal text-muted-foreground">one-time</span>
+            </div>
+            <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+              {PAID_OFFER.highlights.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+            <Button asChild>
+              <a href="/checkout">Buy access</a>
+            </Button>
+          </CardContent>
+        </Card>
+
         {/* How it works */}
         <Card>
           <CardHeader>
             <CardTitle>How access works</CardTitle>
             <CardDescription>
-              License-key gating first (fast ship). Webhooks can come later.
+              Buy access or redeem a license key to unlock Automator Portal.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
