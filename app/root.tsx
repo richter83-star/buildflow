@@ -1,7 +1,7 @@
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
 import type { LinksFunction } from "react-router";
 
-import "./tailwind.css";
+import stylesheet from "./tailwind.css?url";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { trpc } from "./utils/trpc";
@@ -12,11 +12,16 @@ import { TooltipProvider } from "./components/ui/tooltip";
 import { AuthProvider } from "./utils/auth";
 import { Watermark } from "./watermark";
 
-import type { LinksFunction } from "react-router";
-import stylesheet from "./tailwind.css?url";
-
-
 export const links: LinksFunction = () => [
+  // Fonts
+  { rel: "preconnect", href: "https://fonts.googleapis.com" },
+  { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+  {
+    rel: "stylesheet",
+    href: "https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap",
+  },
+
+  // Tailwind CSS bundle
   { rel: "stylesheet", href: stylesheet },
 ];
 
@@ -25,7 +30,6 @@ const queryClient = new QueryClient();
 function makeTrpcClient() {
   const m: any = trpcModule;
 
-  // Prefer browser client in browser
   if (typeof window !== "undefined") {
     return (
       m.createTrpcClient?.() ??
@@ -36,10 +40,6 @@ function makeTrpcClient() {
     );
   }
 
-  // SSR / server render
-  const port = process.env.PORT ?? "3000";
-  process.env.PORT = port;
-
   return (
     m.createSSRClient?.() ??
     m.createSsrClient?.() ??
@@ -48,15 +48,6 @@ function makeTrpcClient() {
     m.createTrpcClient?.()
   );
 }
-
-export const links: LinksFunction = () => [
-  { rel: "preconnect", href: "https://fonts.googleapis.com" },
-  { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-  {
-    rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
-  },
-];
 
 export default function App() {
   const trpcClient = useMemo(() => makeTrpcClient(), []);
