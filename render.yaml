@@ -24,4 +24,4 @@ services:
 databases:
   - name: buildflow-db
     databaseName: buildflow
-    plan: starter
+    plan: basic
