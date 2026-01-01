@@ -56,3 +56,8 @@ export function createBrowserClient() {
 export function createTrpcClient() {
   return typeof window === "undefined" ? createSSRClient() : createBrowserClient();
 }
+
+// Back-compat alias (case-sensitive import used in app/root.tsx)
+export function createTRPCClient() {
+  return createTrpcClient();
+}
