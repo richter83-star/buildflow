@@ -6,7 +6,6 @@ services:
     autoDeploy: true
     buildCommand: npm install --include=dev && npm run build
     startCommand: npm run start
-    preDeployCommand: npm run db:push
     envVars:
       - key: NODE_ENV
         value: production
