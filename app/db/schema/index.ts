@@ -5,3 +5,4 @@ export * from './chat';
 export * from './auth';
 export * from './entitlements';
 export * from './license_keys';
+export * from './analytics';
