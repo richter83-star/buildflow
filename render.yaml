@@ -4,12 +4,14 @@ services:
     env: node
     plan: starter
     autoDeploy: true
-    buildCommand: npm ci && npm run build
+    buildCommand: npm install && npm run build
     startCommand: npm run start
     preDeployCommand: npm run db:push
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_VERSION
+        value: 20.19.0
       - key: DATABASE_URL
         fromDatabase:
           name: buildflow-db
