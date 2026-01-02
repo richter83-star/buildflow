@@ -5,6 +5,8 @@ export default [
   route("login", "routes/login.tsx"),
   route("signup", "routes/signup.tsx"),
   route("dashboard", "routes/dashboard.tsx"),
+  route("ai-automation-for-smbs", "routes/landing.ai-automation-for-smbs.tsx"),
+  route("prompt-automation-templates", "routes/landing.prompt-automation-templates.tsx"),
   route("checkout", "routes/checkout.tsx"),
   route("checkout/success", "routes/checkout.success.tsx"),
   route("checkout/cancel", "routes/checkout.cancel.tsx"),
@@ -16,6 +18,7 @@ export default [
   // ✅ Portal module pages
   route("portal/start", "routes/portal.start.tsx"),
   route("portal/setup", "routes/portal.setup.tsx"),
+  route("portal/seo", "routes/portal.seo.tsx"),
   route("portal/troubleshooting", "routes/portal.troubleshooting.tsx"),
 
   // OAuth routes

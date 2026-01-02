@@ -63,7 +63,7 @@ export default function TodoComponent() {
       createMutation.mutate(newTodo);
     } catch (err) {
       if (err instanceof z.ZodError) {
-        setError(err.errors.map(e => e.message).join(', '));
+        setError(err.issues.map((issue) => issue.message).join(", "));
       } else {
         setError('Failed to create todo');
         console.error(err);
@@ -131,9 +131,9 @@ export default function TodoComponent() {
         <button 
           type="submit" 
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          disabled={createMutation.isLoading}
+          disabled={createMutation.isPending}
         >
-          {createMutation.isLoading ? 'Creating...' : 'Add Todo'}
+          {createMutation.isPending ? 'Creating...' : 'Add Todo'}
         </button>
       </form>
       
@@ -162,7 +162,7 @@ export default function TodoComponent() {
                     ? 'bg-yellow-500 hover:bg-yellow-600' 
                     : 'bg-green-500 hover:bg-green-600'
                 } text-white`}
-                disabled={toggleMutation.isLoading}
+                disabled={toggleMutation.isPending}
               >
                 {todo.completed ? 'Undo' : 'Complete'}
               </button>
@@ -170,7 +170,7 @@ export default function TodoComponent() {
               <button
                 onClick={() => deleteTodo(todo.id)}
                 className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                disabled={deleteMutation.isLoading}
+                disabled={deleteMutation.isPending}
               >
                 Delete
               </button>

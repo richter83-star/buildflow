@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import { sql } from "drizzle-orm";
 import { db } from "./index.server";
+import { hashLicenseKey, normalizeLicenseKey } from "../utils/license.server";
 
 // Ensure .env loads when running seed directly
 dotenv.config({ path: ".env", override: true });
@@ -8,7 +9,7 @@ dotenv.config({ path: ".env", override: true });
 const AUTOMATOR = {
   id: "550e8400-e29b-41d4-a716-4466554400aa",
   slug: "automator",
-  name: "Automator Portal",
+  name: "Prompt Automation Pack",
   price: "47.00",
   thumbnail_url:
     "https://images.unsplash.com/photo-1556761175-129418cb2dfe?w=800&h=600&fit=crop",
@@ -138,9 +139,18 @@ async function seedLicenseKeys(productId: string) {
     return;
   }
 
-  const keyCol =
-    (await firstExistingColumn("license_keys", ["key", "license_key", "code"])) ??
-    "key";
+  const keyCol = await firstExistingColumn("license_keys", [
+    "key_hash",
+    "key",
+    "license_key",
+    "code",
+  ]);
+
+  if (!keyCol) {
+    throw new Error(`license_keys exists but has no supported key column.`);
+  }
+
+  const useHash = keyCol === "key_hash";
 
   const hasProductId = await columnExists("license_keys", "product_id");
   if (!hasProductId) {
@@ -154,8 +164,10 @@ async function seedLicenseKeys(productId: string) {
   const colSql = sql.raw(cols.map((c) => `"${c}"`).join(", "));
 
   for (const k of LICENSE_KEYS) {
-    const vals: any[] = [k, productId];
-    if (statusCol) vals.push("active");
+    const normalized = normalizeLicenseKey(k);
+    const keyValue = useHash ? hashLicenseKey(normalized) : normalized;
+    const vals: any[] = [keyValue, productId];
+    if (statusCol) vals.push("unused");
 
     const valuesSql = sql.join(vals.map((v) => sql`${v}`), sql`, `);
 
@@ -182,7 +194,7 @@ async function seedTodos() {
 
   const rows = [
     { title: "Redeem a license key", description: "Test /redeem flow", completed: false },
-    { title: "Verify entitlement gate", description: "Portal requires automator entitlement", completed: false },
+    { title: "Verify entitlement gate", description: "Portal requires paid entitlement", completed: false },
     { title: "Ship v0", description: "Get the portal live", completed: false },
   ];
 
@@ -203,7 +215,7 @@ export async function seedDatabase() {
   console.log("[seed] starting…");
 
   const productId = await ensureAutomatorProduct();
-  console.log(`[seed] ensured automator product id=${productId}`);
+  console.log(`[seed] ensured prompt pack product id=${productId}`);
 
   await seedLicenseKeys(productId);
   await seedTodos();

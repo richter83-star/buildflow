@@ -42,8 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    if (meQuery.status !== "loading") setIsLoaded(true);
-  }, [meQuery.status]);
+    if (!meQuery.isPending) setIsLoaded(true);
+  }, [meQuery.isPending]);
 
   async function signOut() {
     try {

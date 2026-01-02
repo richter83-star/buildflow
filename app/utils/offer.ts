@@ -1,14 +1,14 @@
 export const PAID_OFFER = {
   productSlug: "automator",
-  name: "Automator Portal",
+  name: "Prompt Automation Pack",
   priceCents: 4700,
   currency: "usd",
-  tagline: "Private setup + troubleshooting portal for Automator buyers.",
+  tagline: "Digital prompts + automation workflows to save hours each week.",
   highlights: [
-    "Step-by-step onboarding checklist",
-    "Setup guides with copy/paste commands",
-    "Troubleshooting decision trees",
-    "Updates and downloadable assets",
+    "Prompt packs for common workflows",
+    "Automation playbooks + templates",
+    "Copy/paste setup + examples",
+    "Troubleshooting checklists",
   ],
 };
 

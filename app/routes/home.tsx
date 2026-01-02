@@ -15,12 +15,12 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   // Logged in => route based on entitlement
-  const hasEntitlement = await caller.portal.hasEntitlement({ productSlug: "automator" });
+  const hasEntitlement = await caller.portal.hasEntitlement({ productSlug: PAID_OFFER.productSlug });
   if (hasEntitlement) {
     return redirect("/portal");
   }
 
-  return redirect("/redeem");
+  return redirect("/checkout");
 }
 
 export default function HomePage() {
@@ -30,27 +30,27 @@ export default function HomePage() {
         {/* Hero */}
         <div className="space-y-4">
           <div className="inline-flex items-center rounded-full border bg-background px-3 py-1 text-sm">
-            Automator Portal
+            {PAID_OFFER.name}
           </div>
 
           <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">
-            A gated portal for Automator.
+            Digital prompts + automation you can plug in today.
           </h1>
 
           <p className="max-w-2xl text-base text-muted-foreground md:text-lg">
-            This is the private customer area where buyers unlock setup guides, troubleshooting flows,
-            downloads, and updates. If you already have a license key, redeem it and go straight in.
+            A private portal with prompt packs, automation playbooks, and setup checklists.
+            Buy once, get instant access.
           </p>
 
           <div className="flex flex-wrap gap-3 pt-2">
             <Button asChild>
-              <a href="/signup">Create account</a>
+              <a href="#buy">Buy access</a>
             </Button>
             <Button variant="secondary" asChild>
-              <a href="/login">Log in</a>
+              <a href="/signup">Create account</a>
             </Button>
             <Button variant="outline" asChild>
-              <a href="/checkout">Buy access</a>
+              <a href="/login">Log in</a>
             </Button>
             <Button variant="outline" asChild>
               <a href="/redeem">Redeem license key</a>
@@ -62,25 +62,25 @@ export default function HomePage() {
         <div className="grid gap-6 md:grid-cols-3">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Start Here</CardTitle>
+              <CardTitle className="text-lg">Prompt Packs</CardTitle>
               <CardDescription>
-                The shortest path from “I bought it” to “it’s working.”
+                Ready-to-run prompts for the workflows you do every week.
               </CardDescription>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
-              Onboarding checklist + recommended first setup.
+              Copy, customize, and ship results fast.
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Setup</CardTitle>
+              <CardTitle className="text-lg">Automation Playbooks</CardTitle>
               <CardDescription>
-                Clear steps, sane defaults, and copy/paste commands.
+                Step-by-step templates to connect tools and reduce manual work.
               </CardDescription>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
-              Get configured without digging through docs or guessing.
+              Clear checklists with sane defaults.
             </CardContent>
           </Card>
 
@@ -88,17 +88,50 @@ export default function HomePage() {
             <CardHeader>
               <CardTitle className="text-lg">Troubleshooting</CardTitle>
               <CardDescription>
-                Decision-tree fixes for the failures you’ll actually hit.
+                Fix output drift and workflow issues quickly.
               </CardDescription>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
-              Fast diagnosis → specific fix → verify it’s solved.
+              Short decision trees to get back on track.
             </CardContent>
           </Card>
         </div>
 
+        {/* Learn more */}
+        <div className="space-y-4">
+          <div className="text-sm font-medium text-muted-foreground">Learn more</div>
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">AI Automation for SMBs</CardTitle>
+                <CardDescription>
+                  Plug-and-play prompts and playbooks built for small teams.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="outline" asChild>
+                  <a href="/ai-automation-for-smbs">Read the full page</a>
+                </Button>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Prompt Automation Templates</CardTitle>
+                <CardDescription>
+                  Proven templates that help you ship consistent results fast.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="outline" asChild>
+                  <a href="/prompt-automation-templates">Read the full page</a>
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
         {/* Pricing */}
-        <Card>
+        <Card id="buy">
           <CardHeader>
             <CardTitle>Launch offer</CardTitle>
             <CardDescription>{PAID_OFFER.tagline}</CardDescription>
@@ -112,9 +145,15 @@ export default function HomePage() {
                 <li key={item}>{item}</li>
               ))}
             </ul>
-            <Button asChild>
-              <a href="/checkout">Buy access</a>
-            </Button>
+            <div className="pt-2">
+              <stripe-buy-button
+                buy-button-id="buy_btn_1SkhrTBkploTMGtNp2gl6bgg"
+                publishable-key="pk_live_51SbtXSBkploTMGtNlE2iUtn02FYbUyjGpKupFvPmsTW3oRUlBW8swCBujjQlrqy15VScsCEiGP4TQTViaM1ZCZsp00OakzF5ik"
+              ></stripe-buy-button>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              After checkout, create an account with the same email to unlock access.
+            </div>
           </CardContent>
         </Card>
 
@@ -123,19 +162,19 @@ export default function HomePage() {
           <CardHeader>
             <CardTitle>How access works</CardTitle>
             <CardDescription>
-              Buy access or redeem a license key to unlock Automator Portal.
+              Buy access or redeem a license key to unlock {PAID_OFFER.name}.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
             <ol className="list-decimal space-y-2 pl-5">
               <li>Create an account (or log in).</li>
-              <li>Go to <span className="font-medium text-foreground">/redeem</span> and enter your license key.</li>
-              <li>You’ll be redirected into the portal and stay unlocked on future logins.</li>
+              <li>Complete checkout or redeem a license key.</li>
+              <li>You will be redirected into the portal with instant access.</li>
             </ol>
 
             <div className="flex flex-wrap gap-3 pt-2">
               <Button asChild>
-                <a href="/redeem">I have a key → Redeem</a>
+                <a href="/redeem">I have a key -&gt; Redeem</a>
               </Button>
               <Button variant="secondary" asChild>
                 <a href="/login">Log in</a>
@@ -146,7 +185,7 @@ export default function HomePage() {
 
         {/* Footer-ish */}
         <div className="text-xs text-muted-foreground">
-          Tip: If you’re testing locally, your seed script prints a few AUTO-xxxx keys for redemption.
+          Tip: If you're testing locally, your seed script prints a few sample license keys for redemption.
         </div>
       </div>
     </div>

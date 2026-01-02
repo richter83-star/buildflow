@@ -96,7 +96,7 @@ export default function CheckoutPage({ actionData }: Route.ComponentProps) {
         <CardHeader>
           <CardTitle>Complete your purchase</CardTitle>
           <CardDescription>
-            One-time access to Automator Portal.
+            One-time access to {PAID_OFFER.name}.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -123,7 +123,13 @@ export default function CheckoutPage({ actionData }: Route.ComponentProps) {
           </Form>
 
           <div className="text-xs text-muted-foreground">
-            By purchasing you agree to receive access to the private Automator Portal.
+            By purchasing you agree to receive access to {PAID_OFFER.name}.
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Have a license key?{" "}
+            <a href="/redeem" className="underline underline-offset-4">
+              Redeem it here
+            </a>.
           </div>
         </CardContent>
       </Card>

@@ -16,7 +16,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   // ✅ If already entitled, don't show redeem page
-  const hasEntitlement = await caller.portal.hasEntitlement({ productSlug: "automator" });
+  const hasEntitlement = await caller.portal.hasEntitlement({ productSlug: PAID_OFFER.productSlug });
   if (hasEntitlement) {
     return redirect("/portal");
   }
@@ -58,7 +58,7 @@ export default function RedeemPage({ actionData }: Route.ComponentProps) {
         <CardHeader>
           <CardTitle>Redeem your license</CardTitle>
           <CardDescription>
-            Enter your Automator Portal license key to unlock access.
+            Enter your license key to unlock access to {PAID_OFFER.name}.
           </CardDescription>
         </CardHeader>
 
@@ -76,12 +76,12 @@ export default function RedeemPage({ actionData }: Route.ComponentProps) {
                 <Input
                   id="key"
                   name="key"
-                  placeholder="AUTO-XXXX-XXXX-XXXX"
+                  placeholder="KEY-XXXX-XXXX-XXXX"
                   autoComplete="off"
                   required
                 />
                 <FieldDescription>
-                  Use the key you received after purchasing Automator Portal.
+                  Use the key you received after purchasing {PAID_OFFER.name}.
                 </FieldDescription>
               </Field>
 

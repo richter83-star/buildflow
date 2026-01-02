@@ -1,4 +1,5 @@
 import { redirect, data, Form, useNavigation } from 'react-router';
+import { and, eq } from 'drizzle-orm';
 import { GalleryVerticalEnd } from 'lucide-react';
 import { cn } from '~/lib/utils';
 import { Button } from '~/components/ui/button';
@@ -11,14 +12,18 @@ import {
 } from '~/components/ui/field';
 import { Input } from '~/components/ui/input';
 import { callTrpc } from '~/utils/trpc.server';
+import { PAID_OFFER } from '~/utils/offer';
+import { db } from '~/db/index.server';
+import { entitlements, products } from '~/db/schema';
 import type { Route } from './+types/login';
 
 export async function loader({ request }: Route.LoaderArgs) {
-  // If already logged in, redirect to dashboard
+  // If already logged in, redirect to portal
   const caller = await callTrpc(request);
   const session = await caller.auth.me();
   if (session.isSignedIn) {
-    return redirect('/dashboard');
+    const hasEntitlement = await caller.portal.hasEntitlement({ productSlug: PAID_OFFER.productSlug });
+    return redirect(hasEntitlement ? '/portal' : '/checkout');
   }
   return {};
 }
@@ -36,8 +41,23 @@ export async function action({ request }: Route.ActionArgs) {
     const caller = await callTrpc(request);
     const result = await caller.auth.login({ email, password });
 
-    // Redirect to dashboard with session cookie
-    return redirect('/dashboard', {
+    const hasEntitlement = await db
+      .select({ id: entitlements.id })
+      .from(entitlements)
+      .innerJoin(products, eq(entitlements.productId, products.id))
+      .where(
+        and(
+          eq(entitlements.userId, result.user.id),
+          eq(products.slug, PAID_OFFER.productSlug),
+          eq(entitlements.status, 'active')
+        )
+      )
+      .limit(1);
+
+    const destination = hasEntitlement.length > 0 ? '/portal' : '/checkout';
+
+    // Redirect to destination with session cookie
+    return redirect(destination, {
       headers: {
         'Set-Cookie': result.sessionCookie,
       },
@@ -61,7 +81,7 @@ export default function LoginPage({ actionData }: Route.ComponentProps) {
             <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
               <GalleryVerticalEnd className="size-4" />
             </div>
-            Acme Inc.
+            {PAID_OFFER.name}
           </a>
         </div>
         <div className="flex flex-1 items-center justify-center">
@@ -72,7 +92,7 @@ export default function LoginPage({ actionData }: Route.ComponentProps) {
                   <div className="flex flex-col items-center gap-1 text-center">
                     <h1 className="text-2xl font-bold">Login to your account</h1>
                     <p className="text-muted-foreground text-sm text-balance">
-                      Enter your email below to login to your account
+                      Enter your email below to access {PAID_OFFER.name}.
                     </p>
                   </div>
 

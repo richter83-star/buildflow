@@ -1,6 +1,6 @@
 import type { Route } from "./+types/api.stripe.webhook";
 import { db } from "~/db/index.server";
-import { entitlements, monetizationEvents, products } from "~/db/schema";
+import { entitlements, monetizationEvents, pendingEntitlements, products, users } from "~/db/schema";
 import { and, eq } from "drizzle-orm";
 import { verifyStripeSignature } from "~/utils/billing.server";
 import { PAID_OFFER } from "~/utils/offer";
@@ -34,12 +34,11 @@ export async function action({ request }: Route.ActionArgs) {
     return new Response("ignored", { status: 200 });
   }
 
-  const userId = session.metadata?.user_id ?? session.client_reference_id;
   const productSlug = session.metadata?.product_slug ?? PAID_OFFER.productSlug;
-
-  if (!userId || !productSlug) {
-    return new Response("Missing session metadata", { status: 400 });
-  }
+  const rawEmail = session.customer_email ?? session.customer_details?.email ?? "";
+  const customerEmail = typeof rawEmail === "string" && rawEmail.trim().length > 0
+    ? rawEmail.trim().toLowerCase()
+    : null;
 
   const [product] = await db
     .select({ id: products.id })
@@ -51,23 +50,48 @@ export async function action({ request }: Route.ActionArgs) {
     return new Response("Unknown product", { status: 400 });
   }
 
-  await db
-    .insert(entitlements)
-    .values({
-      userId,
-      productId: product.id,
-      status: "active",
-      source: "stripe",
-      externalId: session.id,
-    })
-    .onConflictDoUpdate({
-      target: [entitlements.userId, entitlements.productId],
-      set: {
+  const metadataUserId = session.metadata?.user_id ?? session.client_reference_id;
+  let resolvedUserId: string | null = metadataUserId ?? null;
+
+  if (!resolvedUserId && customerEmail) {
+    const [user] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, customerEmail))
+      .limit(1);
+
+    resolvedUserId = user?.id ?? null;
+  }
+
+  if (resolvedUserId) {
+    await db
+      .insert(entitlements)
+      .values({
+        userId: resolvedUserId,
+        productId: product.id,
         status: "active",
         source: "stripe",
         externalId: session.id,
-      },
-    });
+      })
+      .onConflictDoUpdate({
+        target: [entitlements.userId, entitlements.productId],
+        set: {
+          status: "active",
+          source: "stripe",
+          externalId: session.id,
+        },
+      });
+  } else if (customerEmail) {
+    await db
+      .insert(pendingEntitlements)
+      .values({
+        email: customerEmail,
+        productId: product.id,
+        externalId: session.id,
+        source: "stripe",
+      })
+      .onConflictDoNothing();
+  }
 
   const externalId = session.payment_intent ?? session.id;
   const amountTotal = typeof session.amount_total === "number"
@@ -92,7 +116,7 @@ export async function action({ request }: Route.ActionArgs) {
 
     if (existing.length === 0) {
       await db.insert(monetizationEvents).values({
-        userId,
+        userId: resolvedUserId ?? null,
         productId: product.id,
         eventType: "purchase",
         amount: amountTotal,
@@ -102,7 +126,7 @@ export async function action({ request }: Route.ActionArgs) {
         status: "completed",
         metadata: JSON.stringify({
           sessionId: session.id,
-          customerEmail: session.customer_email,
+          customerEmail,
         }),
       });
     }

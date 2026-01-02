@@ -4,6 +4,7 @@ import { callTrpc } from "~/utils/trpc.server";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { PortalShell } from "~/components/portal/PortalShell";
+import { PAID_OFFER } from "~/utils/offer";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const caller = await callTrpc(request);
@@ -11,8 +12,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   if (!session.isSignedIn) return redirect("/login");
 
-  const hasEntitlement = await caller.portal.hasEntitlement({ productSlug: "automator" });
-  if (!hasEntitlement) return redirect("/redeem");
+  const hasEntitlement = await caller.portal.hasEntitlement({ productSlug: PAID_OFFER.productSlug });
+  if (!hasEntitlement) return redirect("/checkout");
 
   return {};
 }
@@ -21,27 +22,27 @@ export default function SetupModule() {
   return (
     <PortalShell
       title="Setup"
-      subtitle="Follow these steps in order. Don’t skip the verification checks."
+      subtitle="Follow these steps in order. Keep it simple and test as you go."
     >
       <Card>
         <CardHeader>
-          <CardTitle>Step-by-step</CardTitle>
+          <CardTitle>Workflow setup</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 text-sm text-muted-foreground">
           <ol className="list-decimal pl-5 space-y-2">
-            <li>Install prerequisites (Bun/Node, Postgres).</li>
-            <li>
-              Set environment variables in{" "}
-              <code className="px-1 rounded bg-muted">.env</code>.
-            </li>
-            <li>Run schema push + seed.</li>
-            <li>Start dev server and confirm routes load.</li>
+            <li>Choose the workflow you want to automate.</li>
+            <li>Copy the prompt template and fill in your context.</li>
+            <li>Run the checklist and test on a small input.</li>
+            <li>Save the final prompt and duplicate it for reuse.</li>
           </ol>
 
-          <pre className="overflow-x-auto rounded-md border bg-background p-3 text-xs text-foreground">{`bun install
-bun run db:push
-bun run db:seed
-bun run dev -- --port 3001`}</pre>
+          <div className="text-xs text-muted-foreground">
+            Use this template to keep outputs consistent:
+          </div>
+          <pre className="overflow-x-auto rounded-md border bg-background p-3 text-xs text-foreground">{`Goal:
+Context:
+Constraints:
+Output format:`}</pre>
 
           <div className="pt-2 flex gap-2">
             <Button asChild>

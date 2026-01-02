@@ -1,6 +1,10 @@
 import { Form, Link, redirect, useActionData, useNavigation, type ActionFunctionArgs } from "react-router";
 import { z } from "zod";
+import { eq } from "drizzle-orm";
 import { callTrpc } from "~/utils/trpc.server";
+import { db } from "~/db/index.server";
+import { entitlements, pendingEntitlements } from "~/db/schema";
+import { PAID_OFFER } from "~/utils/offer";
 
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -25,9 +29,49 @@ export async function action({ request }: ActionFunctionArgs) {
 
   try {
     const result = await caller.auth.register({ email, password });
+    let claimedEntitlements = false;
+
+    try {
+      const pending = await db
+        .select({
+          productId: pendingEntitlements.productId,
+          externalId: pendingEntitlements.externalId,
+        })
+        .from(pendingEntitlements)
+        .where(eq(pendingEntitlements.email, email));
+
+      if (pending.length > 0) {
+        for (const row of pending) {
+          await db
+            .insert(entitlements)
+            .values({
+              userId: result.user.id,
+              productId: row.productId,
+              status: "active",
+              source: "stripe",
+              externalId: row.externalId ?? null,
+            })
+            .onConflictDoUpdate({
+              target: [entitlements.userId, entitlements.productId],
+              set: {
+                status: "active",
+                source: "stripe",
+                externalId: row.externalId ?? null,
+              },
+            });
+        }
+
+        await db.delete(pendingEntitlements).where(eq(pendingEntitlements.email, email));
+        claimedEntitlements = true;
+      }
+    } catch (error) {
+      console.error("[signup] failed to claim pending entitlements:", error);
+    }
+
+    const destination = claimedEntitlements ? "/portal" : "/checkout";
 
     // Set session cookie returned from register()
-    return redirect("/dashboard", {
+    return redirect(destination, {
       headers: { "Set-Cookie": result.sessionCookie },
     });
   } catch (err: unknown) {
@@ -49,7 +93,7 @@ export default function SignupPage() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Create account</CardTitle>
-          <CardDescription>Sign up to access Automator Portal.</CardDescription>
+          <CardDescription>Sign up to access {PAID_OFFER.name}.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form method="post" className="space-y-4">

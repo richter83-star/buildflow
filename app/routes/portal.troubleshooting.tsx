@@ -4,6 +4,7 @@ import { callTrpc } from "~/utils/trpc.server";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { PortalShell } from "~/components/portal/PortalShell";
+import { PAID_OFFER } from "~/utils/offer";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const caller = await callTrpc(request);
@@ -11,15 +12,15 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   if (!session.isSignedIn) return redirect("/login");
 
-  const hasEntitlement = await caller.portal.hasEntitlement({ productSlug: "automator" });
-  if (!hasEntitlement) return redirect("/redeem");
+  const hasEntitlement = await caller.portal.hasEntitlement({ productSlug: PAID_OFFER.productSlug });
+  if (!hasEntitlement) return redirect("/checkout");
 
   return {};
 }
 
 export default function TroubleshootingModule() {
   return (
-    <PortalShell title="Troubleshooting" subtitle="Diagnose → fix → verify. Don’t thrash.">
+    <PortalShell title="Troubleshooting" subtitle="Diagnose, adjust, verify.">
       <Card>
         <CardHeader>
           <CardTitle>Decision Tree</CardTitle>
@@ -27,18 +28,16 @@ export default function TroubleshootingModule() {
         <CardContent className="space-y-4 text-sm text-muted-foreground">
           <ul className="list-disc pl-5 space-y-2">
             <li>
-              <b>App won’t start?</b> Run <code>bun install</code> then{" "}
-              <code>bun run typecheck</code>.
+              <b>Outputs feel generic?</b> Add more context, examples, and constraints.
             </li>
             <li>
-              <b>DB errors?</b> Confirm <code>DATABASE_URL</code> and that Postgres is reachable.
+              <b>Wrong format?</b> Specify the exact output format and provide a sample.
             </li>
             <li>
-              <b>404 on /portal?</b> Check <code>app/routes.ts</code> entries and restart dev.
+              <b>Automation fails?</b> Recheck credentials, triggers, and permissions.
             </li>
             <li>
-              <b>Redeem fails?</b> Verify key not reused; check DB tables{" "}
-              <code>license_keys</code> and <code>entitlements</code>.
+              <b>Results inconsistent?</b> Test with a smaller input first.
             </li>
           </ul>
 

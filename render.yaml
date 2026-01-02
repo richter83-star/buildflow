@@ -6,6 +6,7 @@ services:
     autoDeploy: true
     buildCommand: npm install --include=dev && npm run build
     startCommand: npm run start
+    preDeployCommand: npm run db:push
     envVars:
       - key: NODE_ENV
         value: production
@@ -19,9 +20,14 @@ services:
         sync: false
       - key: STRIPE_WEBHOOK_SECRET
         sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        sync: false
       - key: SESSION_SECRET
         sync: false
 
 databases:
   - name: buildflow-db
     databaseName: buildflow
+    plan: basic
