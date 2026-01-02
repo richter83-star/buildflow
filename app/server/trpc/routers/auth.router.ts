@@ -1,132 +1,140 @@
-import { z } from 'zod';
-import { TRPCError } from '@trpc/server';
-import bcrypt from 'bcryptjs';
-import crypto from 'crypto';
-import { router, procedure } from '../trpc';
-import { users, sessions, type SafeUser } from '../../../db/schema';
-import { eq } from 'drizzle-orm';
-import { SESSION_COOKIE_NAME } from '../context';
+import { TRPCError } from "@trpc/server";
+import bcrypt from "bcryptjs";
+import { z } from "zod";
+import { eq } from "drizzle-orm";
 
-const SALT_ROUNDS = 12;
-const SESSION_EXPIRY_DAYS = 7;
+import { procedure, router } from "../trpc";
+import { users, sessions } from "~/db/schema";
 
-// Generate a secure random token
-function generateSessionToken(): string {
-  return crypto.randomBytes(32).toString('hex');
+type SafeUser = {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  imageUrl: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+const SESSION_EXPIRY_DAYS = 30;
+
+function generateSessionToken() {
+  return crypto.randomUUID().replace(/-/g, "");
 }
 
-// Create session cookie header
-function createSessionCookie(token: string, maxAge: number): string {
-  return `${SESSION_COOKIE_NAME}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}`;
-}
-
-// Clear session cookie header
-function clearSessionCookie(): string {
-  return `${SESSION_COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
+function createSessionCookie(token: string, maxAgeSeconds: number) {
+  return `session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSeconds}`;
 }
 
 export const authRouter = router({
-  // Get current session/user
-  me: procedure.query(({ ctx }): { user: SafeUser | null; isSignedIn: boolean } => {
-    return {
-      user: ctx.user,
-      isSignedIn: ctx.user !== null,
+  me: procedure.query(async ({ ctx }) => {
+    const user = ctx.user;
+    if (!user) {
+      return { isSignedIn: false as const, user: null };
+    }
+
+    const safeUser: SafeUser = {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      imageUrl: user.imageUrl,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     };
+
+    return { isSignedIn: true as const, user: safeUser };
   }),
 
-  // Sign up a new user
-  signup: procedure
-    .input(z.object({
-      email: z.string().email('Invalid email address'),
-      password: z.string().min(8, 'Password must be at least 8 characters'),
-      firstName: z.string().optional(),
-      lastName: z.string().optional(),
-    }))
+  register: procedure
+    .input(
+      z.object({
+        email: z.string().email("Invalid email address"),
+        password: z.string().min(8, "Password must be at least 8 characters"),
+        firstName: z.string().optional(),
+        lastName: z.string().optional(),
+      }),
+    )
     .mutation(async ({ input, ctx }) => {
-      // Check if user already exists
-      const existing = await ctx.db
-        .select({ id: users.id })
+      const email = input.email.toLowerCase();
+
+      const [existing] = await ctx.db
+        .select()
         .from(users)
-        .where(eq(users.email, input.email.toLowerCase()))
+        .where(eq(users.email, email))
         .limit(1);
 
-      if (existing.length > 0) {
-        throw new TRPCError({
-          code: 'CONFLICT',
-          message: 'An account with this email already exists',
-        });
+      if (existing) {
+        throw new TRPCError({ code: "CONFLICT", message: "Email already in use" });
       }
 
-      // Hash password
-      const passwordHash = await bcrypt.hash(input.password, SALT_ROUNDS);
+      const passwordHash = await bcrypt.hash(input.password, 10);
 
-      // Create user
-      const [newUser] = await ctx.db
+      const [created] = await ctx.db
         .insert(users)
         .values({
-          email: input.email.toLowerCase(),
+          email,
           passwordHash,
-          firstName: input.firstName,
-          lastName: input.lastName,
-          imageUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(input.email)}`,
+          firstName: input.firstName ?? null,
+          lastName: input.lastName ?? null,
         })
-        .returning({
-          id: users.id,
-          email: users.email,
-          firstName: users.firstName,
-          lastName: users.lastName,
-          imageUrl: users.imageUrl,
-          createdAt: users.createdAt,
-          updatedAt: users.updatedAt,
-        });
+        .returning();
 
-      // Create session
       const token = generateSessionToken();
       const expiresAt = new Date(Date.now() + SESSION_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
 
       await ctx.db.insert(sessions).values({
-        userId: newUser.id,
+        userId: created.id,
         token,
         expiresAt,
       });
 
+      const safeUser: SafeUser = {
+        id: created.id,
+        email: created.email,
+        firstName: created.firstName,
+        lastName: created.lastName,
+        imageUrl: created.imageUrl,
+        createdAt: created.createdAt,
+        updatedAt: created.updatedAt,
+      };
+
       return {
-        user: newUser,
+        user: safeUser,
         sessionCookie: createSessionCookie(token, SESSION_EXPIRY_DAYS * 24 * 60 * 60),
       };
     }),
 
-  // Log in an existing user
   login: procedure
-    .input(z.object({
-      email: z.string().email('Invalid email address'),
-      password: z.string().min(1, 'Password is required'),
-    }))
+    .input(
+      z.object({
+        email: z.string().email("Invalid email address"),
+        password: z.string().min(1, "Password is required"),
+      }),
+    )
     .mutation(async ({ input, ctx }) => {
-      // Find user by email
+      const email = input.email.toLowerCase();
+
       const [user] = await ctx.db
         .select()
         .from(users)
-        .where(eq(users.email, input.email.toLowerCase()))
+        .where(eq(users.email, email))
         .limit(1);
 
       if (!user) {
-        throw new TRPCError({
-          code: 'UNAUTHORIZED',
-          message: 'Invalid email or password',
-        });
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid email or password" });
       }
 
-      // Verify password
+      // OAuth users may have no password hash
+      if (!user.passwordHash) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid email or password" });
+      }
+
       const isValid = await bcrypt.compare(input.password, user.passwordHash);
       if (!isValid) {
-        throw new TRPCError({
-          code: 'UNAUTHORIZED',
-          message: 'Invalid email or password',
-        });
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid email or password" });
       }
 
-      // Create session
       const token = generateSessionToken();
       const expiresAt = new Date(Date.now() + SESSION_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
 
@@ -136,7 +144,6 @@ export const authRouter = router({
         expiresAt,
       });
 
-      // Return user without password hash
       const safeUser: SafeUser = {
         id: user.id,
         email: user.email,
@@ -153,18 +160,9 @@ export const authRouter = router({
       };
     }),
 
-  // Log out (invalidate session)
-  logout: procedure.mutation(async ({ ctx }) => {
-    if (ctx.sessionToken) {
-      // Delete the session from database
-      await ctx.db
-        .delete(sessions)
-        .where(eq(sessions.token, ctx.sessionToken));
-    }
-
+  logout: procedure.mutation(async () => {
     return {
-      success: true,
-      sessionCookie: clearSessionCookie(),
+      clearCookie: `session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`,
     };
   }),
 });

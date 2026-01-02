@@ -1,98 +1,114 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import { useNavigate } from 'react-router';
-import { trpc } from './trpc';
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { trpc } from "~/utils/trpc";
 
-// Client-side user type (dates are serialized to strings by tRPC)
-export interface AuthUser {
+type AuthUser = {
   id: string;
   email: string;
   firstName: string | null;
   lastName: string | null;
   imageUrl: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
+};
 
-interface AuthContextType {
+type AuthContextValue = {
   isLoaded: boolean;
   isSignedIn: boolean;
-  userId: string | null;
   user: AuthUser | null;
-  signIn: () => void;
-  signOut: () => void;
-  refetch: () => void;
+  isIframeMode: boolean;
+  signOut: () => Promise<void>;
+};
+
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+function detectIframe(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const isIframeMode = useMemo(() => detectIframe(), []);
 
-function AuthProviderInner({ children }: { children: ReactNode }) {
-  const navigate = useNavigate();
-  const [isClient, setIsClient] = useState(false);
-  const utils = trpc.useUtils();
+  // Pull user from server via tRPC (works for both real + mock session cookie setups)
+  const meQuery = trpc.auth.me.useQuery(undefined, {
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
+  const logoutMutation = trpc.auth.logout.useMutation();
+
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    setIsClient(true);
-  }, []);
+    if (meQuery.status !== "loading") setIsLoaded(true);
+  }, [meQuery.status]);
 
-  // Query session only on client (SSR safe)
-  const sessionQuery = trpc.auth.me.useQuery(undefined, {
-    enabled: isClient,
-    refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
+  async function signOut() {
+    try {
+      const data = await logoutMutation.mutateAsync();
 
-  const logoutMutation = trpc.auth.logout.useMutation({
-    onSuccess: async (data) => {
-      // Set the cookie to clear
-      document.cookie = data.sessionCookie;
-      // Invalidate the session query
-      await utils.auth.me.invalidate();
-      // Redirect to login
-      navigate('/login');
-    },
-  });
+      // ✅ Fix: server returns clearCookie
+      if (typeof document !== "undefined" && data?.clearCookie) {
+        document.cookie = data.clearCookie;
+      }
 
-  const signIn = () => {
-    navigate('/login');
-  };
+      // Refresh auth state
+      await meQuery.refetch();
+    } catch {
+      // As a fallback, hard-clear cookie name and reload
+      if (typeof document !== "undefined") {
+        document.cookie = "session=; Path=/; Max-Age=0";
+      }
+      await meQuery.refetch();
+    }
+  }
 
-  const signOut = () => {
-    logoutMutation.mutate();
-  };
-
-  const refetch = () => {
-    sessionQuery.refetch();
-  };
-
-  const value: AuthContextType = {
-    isLoaded: isClient && (sessionQuery.data !== undefined || !sessionQuery.isLoading),
-    isSignedIn: sessionQuery.data?.isSignedIn ?? false,
-    userId: sessionQuery.data?.user?.id ?? null,
-    user: sessionQuery.data?.user ?? null,
-    signIn,
+  const value: AuthContextValue = {
+    isLoaded,
+    isSignedIn: Boolean(meQuery.data?.isSignedIn),
+    user: (meQuery.data?.user as AuthUser | null) ?? null,
+    isIframeMode,
     signOut,
-    refetch,
   };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) {
+    throw new Error("useAuth must be used within <AuthProvider>");
+  }
+  return ctx;
+}
+
+export function SignedIn({ children }: { children: React.ReactNode }) {
+  const { isLoaded, isSignedIn } = useAuth();
+  if (!isLoaded) return null;
+  return isSignedIn ? <>{children}</> : null;
+}
+
+export function SignedOut({ children }: { children: React.ReactNode }) {
+  const { isLoaded, isSignedIn } = useAuth();
+  if (!isLoaded) return null;
+  return !isSignedIn ? <>{children}</> : null;
+}
+
+export function UserButton() {
+  const { isLoaded, isSignedIn, user, signOut } = useAuth();
+  if (!isLoaded || !isSignedIn) return null;
 
   return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
+    <button
+      type="button"
+      onClick={() => void signOut()}
+      className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted"
+      title="Sign out"
+    >
+      <span className="text-muted-foreground">{user?.email}</span>
+      <span className="font-medium">Sign out</span>
+    </button>
   );
-}
-
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export function AuthProvider({ children }: AuthProviderProps) {
-  return <AuthProviderInner>{children}</AuthProviderInner>;
-}
-
-export function useAuth(): AuthContextType {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
 }

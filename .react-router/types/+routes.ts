@@ -23,16 +23,37 @@ type Pages = {
   "/dashboard": {
     params: {};
   };
+  "/ai-automation-for-smbs": {
+    params: {};
+  };
+  "/prompt-automation-templates": {
+    params: {};
+  };
+  "/checkout": {
+    params: {};
+  };
+  "/checkout/success": {
+    params: {};
+  };
+  "/checkout/cancel": {
+    params: {};
+  };
   "/redeem": {
     params: {};
   };
   "/portal": {
     params: {};
   };
-  "/portal/downloads": {
+  "/portal/start": {
     params: {};
   };
-  "/portal/changelog": {
+  "/portal/setup": {
+    params: {};
+  };
+  "/portal/seo": {
+    params: {};
+  };
+  "/portal/troubleshooting": {
     params: {};
   };
   "/auth/github": {
@@ -52,12 +73,15 @@ type Pages = {
       "*": string;
     };
   };
+  "/api/stripe/webhook": {
+    params: {};
+  };
 };
 
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/login" | "/signup" | "/dashboard" | "/redeem" | "/portal" | "/portal/downloads" | "/portal/changelog" | "/auth/github" | "/auth/github/callback" | "/auth/google" | "/auth/google/callback" | "/api/trpc/*";
+    page: "/" | "/login" | "/signup" | "/dashboard" | "/ai-automation-for-smbs" | "/prompt-automation-templates" | "/checkout" | "/checkout/success" | "/checkout/cancel" | "/redeem" | "/portal" | "/portal/start" | "/portal/setup" | "/portal/seo" | "/portal/troubleshooting" | "/auth/github" | "/auth/github/callback" | "/auth/google" | "/auth/google/callback" | "/api/trpc/*" | "/api/stripe/webhook";
   };
   "routes/home.tsx": {
     id: "routes/home";
@@ -75,6 +99,26 @@ type RouteFiles = {
     id: "routes/dashboard";
     page: "/dashboard";
   };
+  "routes/landing.ai-automation-for-smbs.tsx": {
+    id: "routes/landing.ai-automation-for-smbs";
+    page: "/ai-automation-for-smbs";
+  };
+  "routes/landing.prompt-automation-templates.tsx": {
+    id: "routes/landing.prompt-automation-templates";
+    page: "/prompt-automation-templates";
+  };
+  "routes/checkout.tsx": {
+    id: "routes/checkout";
+    page: "/checkout";
+  };
+  "routes/checkout.success.tsx": {
+    id: "routes/checkout.success";
+    page: "/checkout/success";
+  };
+  "routes/checkout.cancel.tsx": {
+    id: "routes/checkout.cancel";
+    page: "/checkout/cancel";
+  };
   "routes/redeem.tsx": {
     id: "routes/redeem";
     page: "/redeem";
@@ -83,13 +127,21 @@ type RouteFiles = {
     id: "routes/portal";
     page: "/portal";
   };
-  "routes/portal.downloads.tsx": {
-    id: "routes/portal.downloads";
-    page: "/portal/downloads";
+  "routes/portal.start.tsx": {
+    id: "routes/portal.start";
+    page: "/portal/start";
   };
-  "routes/portal.changelog.tsx": {
-    id: "routes/portal.changelog";
-    page: "/portal/changelog";
+  "routes/portal.setup.tsx": {
+    id: "routes/portal.setup";
+    page: "/portal/setup";
+  };
+  "routes/portal.seo.tsx": {
+    id: "routes/portal.seo";
+    page: "/portal/seo";
+  };
+  "routes/portal.troubleshooting.tsx": {
+    id: "routes/portal.troubleshooting";
+    page: "/portal/troubleshooting";
   };
   "routes/auth/github.tsx": {
     id: "routes/auth/github";
@@ -111,6 +163,10 @@ type RouteFiles = {
     id: "routes/api.trpc.$";
     page: "/api/trpc/*";
   };
+  "routes/api.stripe.webhook.tsx": {
+    id: "routes/api.stripe.webhook";
+    page: "/api/stripe/webhook";
+  };
 };
 
 type RouteModules = {
@@ -119,13 +175,21 @@ type RouteModules = {
   "routes/login": typeof import("./app/routes/login.tsx");
   "routes/signup": typeof import("./app/routes/signup.tsx");
   "routes/dashboard": typeof import("./app/routes/dashboard.tsx");
+  "routes/landing.ai-automation-for-smbs": typeof import("./app/routes/landing.ai-automation-for-smbs.tsx");
+  "routes/landing.prompt-automation-templates": typeof import("./app/routes/landing.prompt-automation-templates.tsx");
+  "routes/checkout": typeof import("./app/routes/checkout.tsx");
+  "routes/checkout.success": typeof import("./app/routes/checkout.success.tsx");
+  "routes/checkout.cancel": typeof import("./app/routes/checkout.cancel.tsx");
   "routes/redeem": typeof import("./app/routes/redeem.tsx");
   "routes/portal": typeof import("./app/routes/portal.tsx");
-  "routes/portal.downloads": typeof import("./app/routes/portal.downloads.tsx");
-  "routes/portal.changelog": typeof import("./app/routes/portal.changelog.tsx");
+  "routes/portal.start": typeof import("./app/routes/portal.start.tsx");
+  "routes/portal.setup": typeof import("./app/routes/portal.setup.tsx");
+  "routes/portal.seo": typeof import("./app/routes/portal.seo.tsx");
+  "routes/portal.troubleshooting": typeof import("./app/routes/portal.troubleshooting.tsx");
   "routes/auth/github": typeof import("./app/routes/auth/github.tsx");
   "routes/auth/github.callback": typeof import("./app/routes/auth/github.callback.tsx");
   "routes/auth/google": typeof import("./app/routes/auth/google.tsx");
   "routes/auth/google.callback": typeof import("./app/routes/auth/google.callback.tsx");
   "routes/api.trpc.$": typeof import("./app/routes/api.trpc.$.tsx");
+  "routes/api.stripe.webhook": typeof import("./app/routes/api.stripe.webhook.tsx");
 };
