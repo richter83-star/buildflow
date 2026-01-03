@@ -1,7 +1,6 @@
 /* Tailwind v4: JS config is NOT auto-detected — must be loaded explicitly */
-@config "../tailwind.config.cjs";
-
 @import "tailwindcss";
+@config "../tailwind.config.cjs";
 
 /* shadcn-style design tokens */
 @layer base {
