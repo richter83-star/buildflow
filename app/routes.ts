@@ -20,6 +20,9 @@ export default [
   route("portal/setup", "routes/portal.setup.tsx"),
   route("portal/seo", "routes/portal.seo.tsx"),
   route("portal/troubleshooting", "routes/portal.troubleshooting.tsx"),
+  route("portal/downloads", "routes/portal.downloads.tsx"),
+  route("portal/changelog", "routes/portal.changelog.tsx"),
+  route("portal/demo", "routes/portal.demo.tsx"),
 
   // OAuth routes
   route("auth/github", "routes/auth/github.tsx"),
