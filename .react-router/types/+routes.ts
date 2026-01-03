@@ -56,6 +56,15 @@ type Pages = {
   "/portal/troubleshooting": {
     params: {};
   };
+  "/portal/downloads": {
+    params: {};
+  };
+  "/portal/changelog": {
+    params: {};
+  };
+  "/portal/demo": {
+    params: {};
+  };
   "/auth/github": {
     params: {};
   };
@@ -81,7 +90,7 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/login" | "/signup" | "/dashboard" | "/ai-automation-for-smbs" | "/prompt-automation-templates" | "/checkout" | "/checkout/success" | "/checkout/cancel" | "/redeem" | "/portal" | "/portal/start" | "/portal/setup" | "/portal/seo" | "/portal/troubleshooting" | "/auth/github" | "/auth/github/callback" | "/auth/google" | "/auth/google/callback" | "/api/trpc/*" | "/api/stripe/webhook";
+    page: "/" | "/login" | "/signup" | "/dashboard" | "/ai-automation-for-smbs" | "/prompt-automation-templates" | "/checkout" | "/checkout/success" | "/checkout/cancel" | "/redeem" | "/portal" | "/portal/start" | "/portal/setup" | "/portal/seo" | "/portal/troubleshooting" | "/portal/downloads" | "/portal/changelog" | "/portal/demo" | "/auth/github" | "/auth/github/callback" | "/auth/google" | "/auth/google/callback" | "/api/trpc/*" | "/api/stripe/webhook";
   };
   "routes/home.tsx": {
     id: "routes/home";
@@ -143,6 +152,18 @@ type RouteFiles = {
     id: "routes/portal.troubleshooting";
     page: "/portal/troubleshooting";
   };
+  "routes/portal.downloads.tsx": {
+    id: "routes/portal.downloads";
+    page: "/portal/downloads";
+  };
+  "routes/portal.changelog.tsx": {
+    id: "routes/portal.changelog";
+    page: "/portal/changelog";
+  };
+  "routes/portal.demo.tsx": {
+    id: "routes/portal.demo";
+    page: "/portal/demo";
+  };
   "routes/auth/github.tsx": {
     id: "routes/auth/github";
     page: "/auth/github";
@@ -186,6 +207,9 @@ type RouteModules = {
   "routes/portal.setup": typeof import("./app/routes/portal.setup.tsx");
   "routes/portal.seo": typeof import("./app/routes/portal.seo.tsx");
   "routes/portal.troubleshooting": typeof import("./app/routes/portal.troubleshooting.tsx");
+  "routes/portal.downloads": typeof import("./app/routes/portal.downloads.tsx");
+  "routes/portal.changelog": typeof import("./app/routes/portal.changelog.tsx");
+  "routes/portal.demo": typeof import("./app/routes/portal.demo.tsx");
   "routes/auth/github": typeof import("./app/routes/auth/github.tsx");
   "routes/auth/github.callback": typeof import("./app/routes/auth/github.callback.tsx");
   "routes/auth/google": typeof import("./app/routes/auth/google.tsx");
